@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Project Z — Deals Near You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#">ZIPPY<span class="brand-dot">.</span></a>
+    <button class="location-pill" id="locationBtn" aria-label="Change location">
+      <span>📍</span>
+      <span id="locationText">Port Orange, FL</span>
+      <span>⌄</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">SAVE MORE. GO MORE.</div>
+      <h1>What’s worth it<br><span>near you?</span></h1>
+      <p>Find the best food, shopping, activities, and entertainment deals.</p>
+
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="searchInput" type="search" placeholder="Search burgers, coffee, shoes..." autocomplete="off" />
+        <button id="clearSearch" class="clear-search" aria-label="Clear search">×</button>
+      </div>
+    </section>
+
+    <section class="quick-row" aria-label="Quick filters">
+      <button class="chip active" data-category="All">🔥 For You</button>
+      <button class="chip" data-category="Food">🍔 Food</button>
+      <button class="chip" data-category="Coffee">☕ Coffee</button>
+      <button class="chip" data-category="Shopping">🛍️ Shopping</button>
+      <button class="chip" data-category="Fun">🎳 Fun</button>
+    </section>
+
+    <section class="section-head">
+      <div>
+        <p class="section-kicker">RIGHT NOW</p>
+        <h2>Best deals nearby</h2>
+      </div>
+      <button class="text-btn" id="sortBtn">Nearest ↕</button>
+    </section>
+
+    <section id="dealGrid" class="deal-grid" aria-live="polite"></section>
+
+    <section class="business-banner">
+      <div>
+        <p class="section-kicker">OWN A BUSINESS?</p>
+        <h3>Put your deal in front of local customers.</h3>
+        <p>Early listings are free while we build the network.</p>
+      </div>
+      <button id="businessBtn">Add a deal</button>
+    </section>
+
+    <section id="appPanel" class="app-panel" hidden>
+      <div class="panel-head">
+        <p class="section-kicker" id="panelKicker">EXPLORE</p>
+        <h2 id="panelTitle">Discover more nearby</h2>
+        <p id="panelText">Browse every deal or jump into a category.</p>
+      </div>
+      <div id="panelContent"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <a href="#" class="nav-item active" data-view="home"><span>⌂</span><small>Home</small></a>
+    <a href="#" class="nav-item" data-view="explore"><span>⌕</span><small>Explore</small></a>
+    <a href="#" class="nav-item" data-view="map"><span>⌖</span><small>Map</small></a>
+    <a href="#" class="nav-item" data-view="saved"><span>♡</span><small>Saved</small></a>
+  </nav>
+
+  <dialog id="locationDialog" class="modal">
+    <form method="dialog" class="modal-card" id="locationForm">
+      <button class="modal-close" value="cancel" aria-label="Close">×</button>
+      <p class="section-kicker">YOUR AREA</p>
+      <h3>Where should we look?</h3>
+      <p>Use your current location or enter a city / ZIP code.</p>
+      <button type="button" id="geoBtn" class="primary-btn">📍 Use my location</button>
+      <div class="divider"><span>or</span></div>
+      <input id="manualLocation" type="text" placeholder="Port Orange, FL or 32127" />
+      <button type="submit" class="secondary-btn">Set location</button>
+      <p id="geoStatus" class="status-text"></p>
+    </form>
+  </dialog>
+
+  <dialog id="businessDialog" class="modal">
+    <form method="dialog" class="modal-card">
+      <button class="modal-close" value="cancel" aria-label="Close">×</button>
+      <p class="section-kicker">FOR LOCAL BUSINESSES</p>
+      <h3>Get featured on Zippy.</h3>
+      <p>This MVP doesn’t submit deals yet, but this is where the business onboarding flow will go next.</p>
+      <button class="primary-btn" value="ok">Got it</button>
+    </form>
+  </dialog>
+
+  <dialog id="dealDialog" class="modal deal-modal">
+    <div class="deal-detail-card">
+      <button class="modal-close" id="dealCloseBtn" aria-label="Close">×</button>
+      <div class="deal-detail-hero">
+        <div class="deal-detail-emoji" id="detailEmoji">🍔</div>
+        <div class="discount-badge" id="detailDiscount">SAVE 35%</div>
+      </div>
+      <div class="deal-detail-content">
+        <p class="section-kicker" id="detailCategory">FOOD</p>
+        <h3 id="detailTitle">$7.99 Burger + Fries</h3>
+        <p class="detail-business" id="detailBusiness">Beachside Burger Co.</p>
+
+        <div class="detail-price-row">
+          <div>
+            <span class="detail-price" id="detailPrice">$7.99</span>
+            <span class="old-price" id="detailOldPrice">$12.29</span>
+          </div>
+          <span class="zippy-score" id="detailScore">9.2 Zippy Score</span>
+        </div>
+
+        <div class="detail-facts">
+          <div><span>📍</span><strong id="detailDistance">1.2 mi away</strong><small id="detailAddress">Port Orange, FL</small></div>
+          <div><span>⏰</span><strong id="detailExpires">Ends tonight</strong><small id="detailVerified">Verified today</small></div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Deal details</h4>
+          <p id="detailDescription"></p>
+        </div>
+
+        <div class="detail-section">
+          <h4>Terms</h4>
+          <p id="detailTerms"></p>
+        </div>
+
+        <div class="detail-actions">
+          <button class="secondary-action" id="saveDealBtn">♡ Save</button>
+          <button class="secondary-action" id="directionsBtn">Directions</button>
+          <button class="primary-action" id="getDealBtn">Get Deal</button>
+        </div>
+        <p class="deal-action-status" id="dealActionStatus" aria-live="polite"></p>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
