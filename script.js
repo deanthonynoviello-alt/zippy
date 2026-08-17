@@ -1,4 +1,4 @@
-const deals = [
+const fallbackDeals = [
   { id: 1, category: 'Food', emoji: '🍔', title: '$7.99 Burger + Fries', business: 'Beachside Burger Co.', distance: 1.2, expires: 'Ends tonight', discount: 'SAVE 35%', price: '$7.99', oldPrice: '$12.29', score: 9.2, address: 'Port Orange, FL', verified: 'Verified today', description: 'Classic burger with fries for one low price. A strong nearby dinner deal when you want something quick without paying full menu price.', terms: 'Dine-in or takeout. One offer per customer. Not valid with other discounts. Availability may vary by location.' },
   { id: 2, category: 'Coffee', emoji: '☕', title: 'Buy One, Get One Free', business: 'Sunrise Coffee', distance: 0.8, expires: 'Ends 6 PM', discount: 'BOGO', price: '$4.75', oldPrice: '$9.50', score: 9.6, address: 'Port Orange, FL', verified: 'Verified today', description: 'Buy one handcrafted drink and get a second eligible drink free. Great for two people or a two-coffee kind of day.', terms: 'Equal or lesser value drink is free. Participating drinks only. Limit one redemption per visit.' },
   { id: 3, category: 'Shopping', emoji: '👟', title: '40% Off Select Shoes', business: 'Coastal Kicks', distance: 2.4, expires: 'Ends Sunday', discount: 'SAVE 40%', price: '$53.99', oldPrice: '$89.99', score: 8.8, address: 'Port Orange, FL', verified: 'Verified yesterday', description: 'Save 40% on select casual and athletic shoes while promotional inventory lasts.', terms: 'Select styles only. Excludes clearance and limited releases. In-store availability may differ.' },
@@ -6,6 +6,64 @@ const deals = [
   { id: 5, category: 'Food', emoji: '🍕', title: '$10 Large Cheese Pizza', business: 'Volusia Pizza House', distance: 2.0, expires: 'Ends 9 PM', discount: 'SAVE 38%', price: '$10', oldPrice: '$16.25', score: 9.4, address: 'Port Orange, FL', verified: 'Verified today', description: 'Large cheese pizza for $10. Add toppings at regular menu pricing.', terms: 'Carryout only. One discounted pizza per order. Taxes and add-ons are extra.' },
   { id: 6, category: 'Shopping', emoji: '🧴', title: 'Buy 2, Get 1 Free', business: 'Glow & Co.', distance: 4.6, expires: 'Ends Aug 18', discount: '3 FOR 2', price: '$18', oldPrice: '$27', score: 8.4, address: 'Daytona Beach, FL', verified: 'Verified yesterday', description: 'Mix and match eligible skincare and body-care items and receive the lowest-priced item free.', terms: 'Eligible items only. Lowest-priced qualifying item is free. Cannot be combined with other offers.' }
 ];
+
+let deals = [...fallbackDeals];
+
+
+const REFERENCE_LOCATION = { lat: 29.1383, lon: -80.9926 };
+
+function distanceMiles(lat1, lon1, lat2, lon2) {
+  const toRad = d => (d * Math.PI) / 180;
+  const R = 3958.8;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function mapDbDeal(row) {
+  const hasCoords = Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude));
+  return {
+    id: Number(row.id),
+    category: row.category,
+    emoji: row.emoji || '🏷️',
+    title: row.title,
+    business: row.businessName,
+    distance: hasCoords
+      ? distanceMiles(
+          REFERENCE_LOCATION.lat,
+          REFERENCE_LOCATION.lon,
+          Number(row.latitude),
+          Number(row.longitude)
+        )
+      : 0,
+    expires: row.expirationText || '',
+    discount: row.discountLabel || '',
+    price: row.price || '',
+    oldPrice: row.originalPrice || '',
+    score: Number(row.score || 0),
+    address: [row.address, row.city, row.state, row.zipCode].filter(Boolean).join(', '),
+    verified: row.verifiedText || '',
+    description: row.description || '',
+    terms: row.terms || ''
+  };
+}
+
+async function loadDealsFromDatabase() {
+  try {
+    const response = await fetch('/api/deals', { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error(`Deal API returned ${response.status}`);
+    const payload = await response.json();
+    if (!Array.isArray(payload.deals)) throw new Error('Deal API returned an unexpected response.');
+    deals = payload.deals.map(mapDbDeal);
+  } catch (error) {
+    console.warn('Could not load database deals; using fallback sample deals.', error);
+    deals = [...fallbackDeals];
+  }
+  renderDeals();
+}
 
 let activeCategory = 'All';
 let ascending = true;
@@ -197,7 +255,7 @@ document.getElementById('geoBtn').addEventListener('click', () => {
   );
 });
 
-renderDeals();
+loadDealsFromDatabase();
 
 
 function updateSaveButton() {
